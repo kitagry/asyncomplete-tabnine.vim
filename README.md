@@ -2,7 +2,7 @@
 
 [asyncomplete](https://github.com/prabirshrestha/asyncomplete.vim) source for [TabNine](https://www.tabnine.com/)
 
-## Installation
+### Installation
 
 For [dein.vim](https://github.com/Shougo/dein.vim)
 
@@ -12,6 +12,17 @@ if has('win32') || has('win64')
 else
   call dein#add('kitagry/asyncomplete-tabnine.vim', { 'build': './install.sh'  })
 endif
+```
+
+### Registration
+
+
+```vim
+call asyncomplete#register_source(asyncomplete#sources#tabnine#get_source_options({
+  \ 'name': 'tabnine',
+  \ 'allowlist': ['*'],
+  \ 'completor': function('asyncomplete#sources#tabnine#completor'),
+  \ }))
 ```
 
 ## Inspired
