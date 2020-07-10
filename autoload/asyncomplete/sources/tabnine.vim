@@ -4,7 +4,6 @@ let s:binary_dir = expand('<sfile>:p:h:h:h:h') . '/binaries'
 let s:job = v:none
 let s:chan = v:none
 let s:buffer = ''
-let s:optname = 'tabnine'
 let s:ctx = {}
 let s:startcol = 0
 
@@ -17,7 +16,6 @@ function! asyncomplete#sources#tabnine#completor(opt, ctx)
 
     let l:startcol = l:col - l:lwlen
 
-    let s:opt = a:opt['name']
     let s:ctx = a:ctx
     let s:startcol = l:startcol
     call s:get_response(a:ctx)
@@ -107,12 +105,15 @@ function! s:out_cb(channel, msg) abort
     for l:result in l:response['results']
         let l:word = []
         call add(l:word, l:result['new_prefix'])
-
-        call add(l:words, [l:result['new_prefix']])
+        if has_key(l:result, 'detail')
+            call add(l:word, l:result['detail'])
+        else
+            call add(l:word, '')
+        endif
+        call add(l:words, l:word)
     endfor
-    let l:matches = map(l:words,'{"word":v:val,"dup":1,"icase":1,"menu": "[tabnine]"}')
-    echomsg l:matches
-    call asyncomplete#complete(s:optname, s:ctx, s:startcol, l:matches)
+    let l:matches = map(l:words, {_, val -> {"word": val[0],"dup":1,"icase":1,"menu": '[tabnine:' . val[1] . ']'}})
+    call asyncomplete#complete('tabnine', s:ctx, s:startcol, l:matches)
 endfunction
 
 function! s:err_cb(channel, msg) abort
