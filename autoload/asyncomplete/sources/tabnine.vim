@@ -147,7 +147,8 @@ function! s:get_tabnine_path(binary_dir) abort
 endfunction
 
 function! s:parse_architecture(arch) abort
-    if system('file -L "' . exepath(v:progpath) . '"') =~ 'x86-64'
+    let l:system = system('file -L "' . exepath(v:progpath) . '"')
+    if  l:system =~ 'x86-64' || l:system =~ 'x86_64'
         return 'x86_64'
     endif
     return a:arch
