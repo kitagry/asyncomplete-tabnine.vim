@@ -1,5 +1,3 @@
-let s:line_limit = 1000
-let s:max_num_result = 10
 let s:binary_dir = expand('<sfile>:p:h:h:h:h') . '/binaries'
 let s:job = v:none
 let s:chan = v:none
@@ -34,14 +32,16 @@ function! s:start_tabnine() abort
 endfunction
 
 function! s:get_response(opt, ctx) abort
+    let l:line_limit = get(a:opt['config'], 'line_limit', 1000)
+    let l:max_num_result = get(a:opt['config'], 'max_num_result', 20)
     let l:pos = getpos('.')
     let l:last_line = line('$')
-    let l:before_line = max([1, l:pos[1] - s:line_limit])
+    let l:before_line = max([1, l:pos[1] - l:line_limit])
     let l:before_lines = getline(l:before_line, l:pos[1])
     if !empty(l:before_lines)
         let l:before_lines[-1] = l:before_lines[-1][:l:pos[2]-1]
     endif
-    let l:after_line = min([l:last_line, l:pos[1] + s:line_limit])
+    let l:after_line = min([l:last_line, l:pos[1] + l:line_limit])
     let l:after_lines = getline(l:pos[1], l:after_line)
     if !empty(l:after_lines)
         let l:after_lines[0] = l:after_lines[0][l:pos[2]:]
@@ -63,7 +63,7 @@ function! s:get_response(opt, ctx) abort
        \   'after': join(l:after_lines, "\n"),
        \   'region_includes_beginning': l:region_includes_beginning,
        \   'region_includes_end': l:region_includes_end,
-       \   'max_num_result': s:max_num_result,
+       \   'max_num_result': l:max_num_result,
        \ }
     call s:request('Autocomplete', l:params, a:opt, a:ctx)
 endfunction
