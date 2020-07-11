@@ -6,16 +6,6 @@ let s:chan = v:none
 let s:is_win = has('win32') || has('win64')
 
 function! asyncomplete#sources#tabnine#completor(opt, ctx)
-    let l:col = a:ctx['col']
-    let l:typed = a:ctx['typed']
-
-    let l:kw = matchstr(l:typed, '\w\+$')
-    let l:lwlen = len(l:kw)
-
-    let l:startcol = l:col - l:lwlen
-
-    let s:ctx = a:ctx
-    let s:startcol = l:startcol
     call s:get_response(a:opt, a:ctx)
 endfunction
 
