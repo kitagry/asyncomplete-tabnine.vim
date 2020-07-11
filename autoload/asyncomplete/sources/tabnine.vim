@@ -33,7 +33,7 @@ endfunction
 
 function! s:get_response(opt, ctx) abort
     let l:line_limit = get(a:opt['config'], 'line_limit', 1000)
-    let l:max_num_result = get(a:opt['config'], 'max_num_result', 20)
+    let l:max_num_result = get(a:opt['config'], 'max_num_result', 10)
     let l:pos = getpos('.')
     let l:last_line = line('$')
     let l:before_line = max([1, l:pos[1] - l:line_limit])
