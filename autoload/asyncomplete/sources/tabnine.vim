@@ -3,9 +3,6 @@ let s:max_num_result = 10
 let s:binary_dir = expand('<sfile>:p:h:h:h:h') . '/binaries'
 let s:job = v:none
 let s:chan = v:none
-let s:buffer = ''
-let s:ctx = {}
-let s:startcol = 0
 let s:is_win = has('win32') || has('win64')
 
 function! asyncomplete#sources#tabnine#completor(opt, ctx)
@@ -93,9 +90,9 @@ function! s:request(name, param, opt, ctx) abort
         return
     endif
 
-    let s:buffer = json_encode(l:req) . "\n"
+    let l:buffer = json_encode(l:req) . "\n"
     call ch_setoptions(s:chan, {"callback": function("s:out_cb", [a:opt, a:ctx])})
-    call ch_sendraw(s:chan, s:buffer)
+    call ch_sendraw(s:chan, l:buffer)
 endfunction
 
 function! s:out_cb(opt, ctx, channel, msg) abort
