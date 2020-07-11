@@ -1,7 +1,6 @@
 let s:binary_dir = expand('<sfile>:p:h:h:h:h') . '/binaries'
-let s:job = v:none
-let s:chan = v:none
 let s:is_win = has('win32') || has('win64')
+let s:chan = v:none
 
 function! asyncomplete#sources#tabnine#completor(opt, ctx)
     call s:get_response(a:opt, a:ctx)
@@ -10,10 +9,6 @@ endfunction
 function! asyncomplete#sources#tabnine#get_source_options(opts)
     call s:start_tabnine()
     return a:opts
-endfunction
-
-function! asyncomplete#sources#tabnine#get_chan()
-    return s:chan
 endfunction
 
 function! s:start_tabnine() abort
@@ -25,9 +20,9 @@ function! s:start_tabnine() abort
       \   '--log-file-path',
       \   s:binary_dir . '/tabnine.log',
       \ ]
-    let s:job = job_start(l:cmd)
-    if job_status(s:job) == 'run'
-        let s:chan = job_getchannel(s:job)
+    let l:job = job_start(l:cmd)
+    if job_status(l:job) == 'run'
+        let s:chan = job_getchannel(l:job)
     endif
 endfunction
 
