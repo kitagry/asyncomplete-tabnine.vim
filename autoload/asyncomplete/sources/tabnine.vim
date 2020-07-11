@@ -6,6 +6,7 @@ let s:chan = v:none
 let s:buffer = ''
 let s:ctx = {}
 let s:startcol = 0
+let s:is_win = has('win32') || has('win64')
 
 function! asyncomplete#sources#tabnine#completor(opt, ctx)
     let l:col = a:ctx['col']
@@ -131,8 +132,8 @@ function! s:get_tabnine_path(binary_dir) abort
         let l:os = 'apple-darwin'
     elseif has('unix')
         let l:os = 'unknown-linux-gnu'
-    elseif has('win32')
-        let l:os = 'pc-windows-gpu'
+    elseif s:is_win
+        let l:os = 'pc-windows-gnu'
     endif
 
     let l:versions = glob(fnameescape(a:binary_dir) . '/*', 1, 1)
@@ -147,6 +148,11 @@ function! s:get_tabnine_path(binary_dir) abort
 endfunction
 
 function! s:parse_architecture(arch) abort
+    if s:is_win
+        " TODO: I don't know how to detect windows' architecture
+        return 'x86_64'
+    endif
+
     let l:system = system('file -L "' . exepath(v:progpath) . '"')
     if  l:system =~ 'x86-64' || l:system =~ 'x86_64'
         return 'x86_64'
@@ -155,7 +161,7 @@ function! s:parse_architecture(arch) abort
 endfunction
 
 function! s:executable_name(name) abort
-    if has('win32') || has('win64')
+    if s:is_win
         return a:name . '.exe'
     endif
     return a:name
