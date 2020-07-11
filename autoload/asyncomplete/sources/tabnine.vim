@@ -77,11 +77,11 @@ function! s:request(name, param, opt, ctx) abort
     endif
 
     let l:buffer = json_encode(l:req) . "\n"
-    call ch_setoptions(s:chan, {"callback": function("s:out_cb", [a:opt, a:ctx])})
+    call ch_setoptions(s:chan, {"callback": function("s:callback", [a:opt, a:ctx])})
     call ch_sendraw(s:chan, l:buffer)
 endfunction
 
-function! s:out_cb(opt, ctx, channel, msg) abort
+function! s:callback(opt, ctx, channel, msg) abort
     let l:col = a:ctx['col']
     let l:typed = a:ctx['typed']
 
@@ -93,17 +93,29 @@ function! s:out_cb(opt, ctx, channel, msg) abort
     let l:response = json_decode(a:msg)
     let l:words = []
     for l:result in l:response['results']
-        let l:word = []
-        call add(l:word, l:result['new_prefix'])
-        if has_key(l:result, 'detail')
-            call add(l:word, l:result['detail'])
-        else
-            call add(l:word, '')
+        let l:word = {}
+
+        let l:new_prefix = get(l:result, 'new_prefix')
+        if l:new_prefix == ''
+            continue
+        endif
+        let l:word['word'] = l:new_prefix
+
+        if get(l:result, 'old_suffix', '') != '' || get(l:result, 'new_suffix', '') != ''
+            let l:user_data = {
+               \   'old_suffix': get(l:result, 'old_suffix', ''),
+               \   'new_suffix': get(l:result, 'new_suffix', ''),
+               \ }
+            let l:word['user_data'] = json_encode(l:user_data)
+        endif
+
+        let l:word['menu'] = '[tabnine]'
+        if get(l:result, 'detail')
+            let l:word['menu'] .= ' ' . l:result['detail']
         endif
         call add(l:words, l:word)
     endfor
-    let l:matches = map(l:words, {_, val -> {"word": val[0],"dup":1,"icase":1,"menu": '[tabnine:' . val[1] . ']'}})
-    call asyncomplete#complete('tabnine', a:ctx, l:startcol, l:matches)
+    call asyncomplete#complete('tabnine', a:ctx, l:startcol, l:words)
 endfunction
 
 function! s:get_tabnine_path(binary_dir) abort
