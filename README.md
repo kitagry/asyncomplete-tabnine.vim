@@ -33,7 +33,7 @@ Copied `install.sh` and `install.ps1` from this plugin.
 
 ## TODO
 
-- [ ] Operation Check
-    - [ ] Windows
-    - [ ] Mac
+- [x] Operation Check
+    - [x] Windows
+    - [x] Mac
     - [x] Ubuntu
