@@ -3,9 +3,6 @@ let s:max_num_result = 10
 let s:binary_dir = expand('<sfile>:p:h:h:h:h') . '/binaries'
 let s:job = v:none
 let s:chan = v:none
-let s:buffer = ''
-let s:ctx = {}
-let s:startcol = 0
 let s:is_win = has('win32') || has('win64')
 
 function! asyncomplete#sources#tabnine#completor(opt, ctx)
@@ -19,7 +16,7 @@ function! asyncomplete#sources#tabnine#completor(opt, ctx)
 
     let s:ctx = a:ctx
     let s:startcol = l:startcol
-    call s:get_response(a:ctx)
+    call s:get_response(a:opt, a:ctx)
 endfunction
 
 function! asyncomplete#sources#tabnine#get_source_options(opts)
@@ -40,16 +37,13 @@ function! s:start_tabnine() abort
       \   '--log-file-path',
       \   s:binary_dir . '/tabnine.log',
       \ ]
-    let l:jobopt = {
-       \   "out_cb": function("s:out_cb"),
-       \ }
-    let s:job = job_start(l:cmd, l:jobopt)
+    let s:job = job_start(l:cmd)
     if job_status(s:job) == 'run'
         let s:chan = job_getchannel(s:job)
     endif
 endfunction
 
-function! s:get_response(ctx) abort
+function! s:get_response(opt, ctx) abort
     let l:pos = getpos('.')
     let l:last_line = line('$')
     let l:before_line = max([1, l:pos[1] - s:line_limit])
@@ -81,10 +75,10 @@ function! s:get_response(ctx) abort
        \   'region_includes_end': l:region_includes_end,
        \   'max_num_result': s:max_num_result,
        \ }
-    call s:request('Autocomplete', l:params)
+    call s:request('Autocomplete', l:params, a:opt, a:ctx)
 endfunction
 
-function! s:request(name, param) abort
+function! s:request(name, param, opt, ctx) abort
     let l:req = {
       \ 'version': '1.0.14',
       \ 'request': {
@@ -96,11 +90,20 @@ function! s:request(name, param) abort
         return
     endif
 
-    let s:buffer = json_encode(l:req) . "\n"
-    call s:flush_vim_sendraw(v:null)
+    let l:buffer = json_encode(l:req) . "\n"
+    call ch_setoptions(s:chan, {"callback": function("s:out_cb", [a:opt, a:ctx])})
+    call ch_sendraw(s:chan, l:buffer)
 endfunction
 
-function! s:out_cb(channel, msg) abort
+function! s:out_cb(opt, ctx, channel, msg) abort
+    let l:col = a:ctx['col']
+    let l:typed = a:ctx['typed']
+
+    let l:kw = matchstr(l:typed, '\w\+$')
+    let l:lwlen = len(l:kw)
+
+    let l:startcol = l:col - l:lwlen
+
     let l:response = json_decode(a:msg)
     let l:words = []
     for l:result in l:response['results']
@@ -114,16 +117,7 @@ function! s:out_cb(channel, msg) abort
         call add(l:words, l:word)
     endfor
     let l:matches = map(l:words, {_, val -> {"word": val[0],"dup":1,"icase":1,"menu": '[tabnine:' . val[1] . ']'}})
-    call asyncomplete#complete('tabnine', s:ctx, s:startcol, l:matches)
-endfunction
-
-function! s:err_cb(channel, msg) abort
-    echoerr a:msg
-endfunction
-
-function! s:exit_cb(channel, msg) abort
-    echoerr "exit"
-    let s:chan = v:none
+    call asyncomplete#complete('tabnine', a:ctx, l:startcol, l:matches)
 endfunction
 
 function! s:get_tabnine_path(binary_dir) abort
@@ -165,21 +159,4 @@ function! s:executable_name(name) abort
         return a:name . '.exe'
     endif
     return a:name
-endfunction
-
-function! s:flush_vim_sendraw(timer) abort
-    if s:chan == v:null
-        return
-    endif
-
-    sleep 1m
-    if len(s:buffer) <= 4096
-        call ch_sendraw(s:chan, s:buffer)
-        let s:buffer = ''
-    else
-        let l:to_send = s:buffer[:4095]
-        let s:buffer = s:buffer[4096:]
-        call ch_sendraw(s:chan, l:to_send)
-        call timer_start(1, function('s:flush_vim_sendraw'))
-    endif
 endfunction
