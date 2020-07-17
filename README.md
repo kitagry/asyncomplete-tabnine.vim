@@ -28,6 +28,14 @@ endif
     \ }))
 ```
 
+#### `line_limit` (default: 1000)
+
+The number of lines before and after the cursor to send to TabNine. If the option is smaller, the performance may be improved.
+
+#### `max_num_results` (default: 10)
+
+The max number of results from Tabnine.
+
 ## Inspired
 
 - [deoplete-tabnine](https://github.com/tbodt/deoplete-tabnine)
