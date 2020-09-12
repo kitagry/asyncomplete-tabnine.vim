@@ -8,9 +8,18 @@ For [dein.vim](https://github.com/Shougo/dein.vim)
 
 ```vim
 if has('win32') || has('win64')
-  call dein#add('kitagry/asyncomplete-tabnine.vim', { 'build': 'powershell.exe .\install.ps1'  })
+  call dein#add('hotoolong/asyncomplete-tabnine.vim', { 'build': 'powershell.exe .\install.ps1'  })
 else
-  call dein#add('kitagry/asyncomplete-tabnine.vim', { 'build': './install.sh'  })
+  call dein#add('hotoolong/asyncomplete-tabnine.vim', { 'build': './install.sh'  })
+endif
+```
+
+For [vim-plug](https://github.com/junegunn/vim-plug)
+```vim
+if has('win32') || has('win64')
+  Plug 'hotoolong/asyncomplete-tabnine.vim', { 'do': 'powershell.exe .\install.ps1' }
+else
+  Plug 'hotoolong/asyncomplete-tabnine.vim', { 'do': './install.sh' }
 endif
 ```
 
@@ -42,9 +51,3 @@ The max number of results from Tabnine.
 
 Copied `install.sh` and `install.ps1` from this plugin.
 
-## TODO
-
-- [x] Operation Check
-    - [x] Windows
-    - [x] Mac
-    - [x] Ubuntu

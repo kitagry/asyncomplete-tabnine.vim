@@ -1,29 +1,12 @@
 let s:binary_dir = expand('<sfile>:p:h:h:h:h') . '/binaries'
 let s:is_win = has('win32') || has('win64')
-let s:chan = v:none
 
 function! asyncomplete#sources#tabnine#completor(opt, ctx)
     call s:get_response(a:opt, a:ctx)
 endfunction
 
 function! asyncomplete#sources#tabnine#get_source_options(opts)
-    call s:start_tabnine()
     return a:opts
-endfunction
-
-function! s:start_tabnine() abort
-    let l:tabnine_path = s:get_tabnine_path(s:binary_dir)
-    let l:cmd = [
-      \   l:tabnine_path,
-      \   '--client',
-      \   'sublime',
-      \   '--log-file-path',
-      \   s:binary_dir . '/tabnine.log',
-      \ ]
-    let l:job = job_start(l:cmd)
-    if job_status(l:job) == 'run'
-        let s:chan = job_getchannel(l:job)
-    endif
 endfunction
 
 function! s:get_response(opt, ctx) abort
@@ -72,16 +55,12 @@ function! s:request(name, param, opt, ctx) abort
       \   },
       \ }
 
-    if s:chan == v:none
-        return
-    endif
-
     let l:buffer = json_encode(l:req) . "\n"
-    call ch_setoptions(s:chan, {"callback": function("s:callback", [a:opt, a:ctx])})
-    call ch_sendraw(s:chan, l:buffer)
+    let s:job = jobstart(l:cmd, {'on_stdout': function("s:callback", [a:opt, a:ctx])})
+    call chansend(s:job, l:buffer)
 endfunction
 
-function! s:callback(opt, ctx, channel, msg) abort
+function! s:callback(opt, ctx, job_id, msg, event) abort
     let l:col = a:ctx['col']
     let l:typed = a:ctx['typed']
 
