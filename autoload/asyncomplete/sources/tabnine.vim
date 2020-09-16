@@ -1,6 +1,7 @@
 let s:binary_dir = expand('<sfile>:p:h:h:h:h') . '/binaries'
 let s:is_win = has('win32') || has('win64')
-let s:chan = v:none
+let s:job = v:null
+let s:ctx = v:null
 
 function! asyncomplete#sources#tabnine#completor(opt, ctx)
     call s:get_response(a:opt, a:ctx)
@@ -20,9 +21,13 @@ function! s:start_tabnine() abort
       \   '--log-file-path',
       \   s:binary_dir . '/tabnine.log',
       \ ]
-    let l:job = job_start(l:cmd)
-    if job_status(l:job) == 'run'
-        let s:chan = job_getchannel(l:job)
+    if has('nvim')
+        let s:job = jobstart(l:cmd, {'on_stdout': function('s:on_stdout')})
+    else
+        let l:job = job_start(l:cmd, {'out_cb': function('s:out_cb')})
+        if job_status(l:job) == 'run'
+            let s:job = l:job
+        endif
     endif
 endfunction
 
@@ -72,18 +77,30 @@ function! s:request(name, param, opt, ctx) abort
       \   },
       \ }
 
-    if s:chan == v:none
+    if s:job == v:null
         return
     endif
 
     let l:buffer = json_encode(l:req) . "\n"
-    call ch_setoptions(s:chan, {"callback": function("s:callback", [a:opt, a:ctx])})
-    call ch_sendraw(s:chan, l:buffer)
+    let s:ctx = a:ctx
+    if has('nvim')
+        call chansend(s:job, l:buffer)
+    else
+        call ch_sendraw(s:job, l:buffer)
+    endif
 endfunction
 
-function! s:callback(opt, ctx, channel, msg) abort
-    let l:col = a:ctx['col']
-    let l:typed = a:ctx['typed']
+function! s:out_cb(channel, msg) abort
+    call s:complete(a:msg)
+endfunction
+
+function! s:on_stdout(channel, msg, event) abort
+    call s:complete(a:msg)
+endfunction
+
+function! s:complete(msg) abort
+    let l:col = s:ctx['col']
+    let l:typed = s:ctx['typed']
 
     let l:kw = matchstr(l:typed, '\w\+$')
     let l:lwlen = len(l:kw)
@@ -115,7 +132,7 @@ function! s:callback(opt, ctx, channel, msg) abort
         endif
         call add(l:words, l:word)
     endfor
-    call asyncomplete#complete('tabnine', a:ctx, l:startcol, l:words)
+    call asyncomplete#complete('tabnine', s:ctx, l:startcol, l:words)
 endfunction
 
 function! s:get_tabnine_path(binary_dir) abort
