@@ -14,6 +14,16 @@ else
 endif
 ```
 
+For [vim-plug](https://github.com/junegunn/vim-plug)
+
+```vim
+if has('win32') || has('win64')
+  Plug 'kitagry/asyncomplete-tabnine.vim', { 'do': 'powershell.exe .\install.ps1' }
+else
+  Plug 'kitagry/asyncomplete-tabnine.vim', { 'do': './install.sh' }
+endif
+```
+
 ### Registration
 
 ```vim
@@ -41,10 +51,3 @@ The max number of results from Tabnine.
 - [deoplete-tabnine](https://github.com/tbodt/deoplete-tabnine)
 
 Copied `install.sh` and `install.ps1` from this plugin.
-
-## TODO
-
-- [x] Operation Check
-    - [x] Windows
-    - [x] Mac
-    - [x] Ubuntu
