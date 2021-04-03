@@ -178,7 +178,7 @@ function! s:parse_macos_architecture() abort
     let l:system = system('uname -m')
     if  l:system =~ 'x86-64' || l:system =~ 'x86_64'
         return 'x86_64'
-    elseif l:system =! 'arm64'  " m1 mac
+    elseif l:system =~ 'arm64'  " m1 mac
         return 'aarch64'
     endif
 endfunction

@@ -21,6 +21,3 @@ do
     rm binaries/$path/TabNine.zip
     chmod +x binaries/$path/*
 done
-
-binariesver=$(grep -Eo '!binaries/.*' .gitignore | cut -c10-)
-sed "s+$binariesver+/$version+g" .gitignore >.gitignore.tmp && mv .gitignore.tmp .gitignore
