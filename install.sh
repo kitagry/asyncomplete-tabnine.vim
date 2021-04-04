@@ -1,22 +1,23 @@
-#!/usr/bin/env bash
-set -o errexit
+#!/bin/sh
+set -e
 
-version=$(curl -sS https://update.tabnine.com/version)
-case $(uname -s) in
-  "Darwin")
-    platform="apple-darwin"
-    ;;
-  "Linux")
-    platform="unknown-linux-gnu"
-    ;;
-esac
-triple="$(uname -m)-$platform"
+# This script downloads the binaries for the most recent version of TabNine.
 
-cd $(dirname $0)
-path=$version/$triple/TabNine
-if [ -f binaries/$path  ]; then
-  exit
-fi
-echo Downloading version $version
-curl https://update.tabnine.com/$path --create-dirs -o binaries/$path
-chmod +x binaries/$path
+version="$(curl -sS https://update.tabnine.com/bundles/version)"
+targets='i686-unknown-linux-musl
+    x86_64-apple-darwin
+    aarch64-apple-darwin
+    x86_64-unknown-linux-musl'
+
+rm -rf ./binaries
+
+echo "$targets" | while read target
+do
+    mkdir -p binaries/$version/$target
+    path=$version/$target
+    echo "downloading $path"
+    curl -sS https://update.tabnine.com/bundles/$path/TabNine.zip > binaries/$path/TabNine.zip
+    unzip -o binaries/$path/TabNine.zip -d binaries/$path
+    rm binaries/$path/TabNine.zip
+    chmod +x binaries/$path/*
+done

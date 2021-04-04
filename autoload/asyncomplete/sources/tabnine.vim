@@ -136,24 +136,25 @@ function! s:complete(msg) abort
 endfunction
 
 function! s:get_tabnine_path(binary_dir) abort
-    let l:os = ''
-    if has('macunix')
-        let l:os = 'apple-darwin'
-    elseif has('unix')
-        let l:os = 'unknown-linux-gnu'
-    elseif s:is_win
-        let l:os = 'pc-windows-gnu'
-    endif
-
     let l:versions = glob(fnameescape(a:binary_dir) . '/*', 1, 1)
     let l:versions = reverse(sort(l:versions))
     for l:version in l:versions
-        let l:triple = s:parse_architecture('') . '-' . l:os
+        let l:triple = s:parse_architecture('') . '-' . s:get_os()
         let l:path = join([l:version, l:triple, s:executable_name('TabNine')], '/')
         if filereadable(l:path)
             return l:path
         endif
     endfor
+endfunction
+
+function! s:get_os() abort
+  if has('macunix')
+      return 'apple-darwin'
+  elseif has('unix')
+      return 'unknown-linux-musl'
+  elseif s:is_win
+      return 'pc-windows-gnu'
+  endif
 endfunction
 
 function! s:parse_architecture(arch) abort
@@ -162,11 +163,24 @@ function! s:parse_architecture(arch) abort
         return 'x86_64'
     endif
 
+    if has('macunix')
+        return s:parse_macos_architecture()
+    end
+
     let l:system = system('file -L "' . exepath(v:progpath) . '"')
     if  l:system =~ 'x86-64' || l:system =~ 'x86_64'
         return 'x86_64'
     endif
     return a:arch
+endfunction
+
+function! s:parse_macos_architecture() abort
+    let l:system = system('uname -m')
+    if  l:system =~ 'x86-64' || l:system =~ 'x86_64'
+        return 'x86_64'
+    elseif l:system =~ 'arm64'  " m1 mac
+        return 'aarch64'
+    endif
 endfunction
 
 function! s:executable_name(name) abort
