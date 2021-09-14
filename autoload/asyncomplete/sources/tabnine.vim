@@ -17,7 +17,7 @@ function! s:start_tabnine() abort
     let l:cmd = [
       \   l:tabnine_path,
       \   '--client',
-      \   'sublime',
+      \   'asyncomplete-vim',
       \   '--log-file-path',
       \   s:binary_dir . '/tabnine.log',
       \ ]
