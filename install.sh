@@ -4,8 +4,7 @@ set -e
 # This script downloads the binaries for the most recent version of TabNine.
 
 version="$(curl -sS https://update.tabnine.com/bundles/version)"
-targets='i686-unknown-linux-musl
-    x86_64-apple-darwin
+targets='x86_64-apple-darwin
     aarch64-apple-darwin
     x86_64-unknown-linux-musl'
 
